@@ -5,6 +5,9 @@ inputs:
   client_id:
     description: "Azure service principal App Id"
     required: true
+  client_secret:
+    description: "Azure service principal password"
+    required: true
   tenant_id:
     description: "Azure tenant id"
     required: true
@@ -17,6 +20,16 @@ inputs:
   azure_environment:
     description: "Azure Environment"
     required: true
+  terraform_action:
+    description: "Terraform action that must be executed. E.g. plan|apply|init..."
+    required: true
+  aks_name:
+    description: "AKS name"
+    required: true
+  aks_resource_group:
+    description: "AKS resource group"
+    required: true
+
 
 runs:
   using: "composite"
@@ -39,6 +52,16 @@ runs:
           restore-keys: |
             terraform-${{ inputs.dir }}
 
+      - name: Generate kubeconfig (with kubelogin)
+        shell: bash
+        run: |
+          echo "🎓 Configure kubeconfig"
+          echo "[INFO] Get kubernetes credentials via az aks get-credentials"
+          az aks get-credentials -g ${{ inputs.aks_resource_group }} -n ${{ inputs.aks_name }} -f config-${{ inputs.aks_name }} --only-show-errors
+          echo "[INFO] Convert kubeconfig via kubelogin"
+          export KUBECONFIG=config-${{ inputs.aks_name }}
+          kubelogin convert-kubeconfig -l spn --client-id "${{ inputs.client_id }}" --client-secret "${{ inputs.client_secret }}"
+
       - name: Terraform plan
         shell: bash
         run: |
@@ -52,4 +75,9 @@ runs:
 
           cd ${{ inputs.dir }}
 
-          bash terraform.sh plan ${{ inputs.azure_environment }} -lock-timeout=300s -lock=false
+          echo "[INFO] 🚀 Run terraform ${{ inputs.terraform_action }} + kubernetes"
+          if [[ "${{ inputs.terraform_action }}" == "apply" ]]; then
+            bash terraform.sh ${{ inputs.terraform_action }} ${{ inputs.azure_environment }} -auto-approve -lock-timeout=300s -lock=false
+          else
+            bash terraform.sh ${{ inputs.terraform_action }} ${{ inputs.azure_environment }} -lock-timeout=300s -lock=false
+          fi
