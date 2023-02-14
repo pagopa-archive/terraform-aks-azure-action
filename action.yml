@@ -57,10 +57,13 @@ runs:
         run: |
           echo "🎓 Configure kubeconfig"
           echo "[INFO] Get kubernetes credentials via az aks get-credentials"
-          az aks get-credentials -g ${{ inputs.aks_resource_group }} -n ${{ inputs.aks_name }} -f config-${{ inputs.aks_name }} --only-show-errors
+          export KUBECONFIG_PATH=~/.kube
+          az aks get-credentials -g ${{ inputs.aks_resource_group }} -n ${{ inputs.aks_name }} -f ${KUBECONFIG_PATH}/config-${{ inputs.aks_name }} --only-show-errors
+
           echo "[INFO] Convert kubeconfig via kubelogin"
-          export KUBECONFIG=config-${{ inputs.aks_name }}
+          export KUBECONFIG=${KUBECONFIG_PATH}/config-${{ inputs.aks_name }}
           kubelogin convert-kubeconfig -l spn --client-id "${{ inputs.client_id }}" --client-secret "${{ inputs.client_secret }}"
+          echo "✅ Kubeconfig converted correctly via kubelogin and saved into ${KUBECONFIG_PATH}/config-${{ inputs.aks_name }}"
 
       - name: Terraform plan
         shell: bash
