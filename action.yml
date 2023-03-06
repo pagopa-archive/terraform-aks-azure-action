@@ -59,7 +59,7 @@ runs:
           echo "✅ Calculated aks resource group"
 
           export KUBECONFIG_PATH=~/.kube
-          az aks get-credentials -g ${aks_resource_group} -n ${{ inputs.aks_name }} -f ${KUBECONFIG_PATH}/config-${{ inputs.aks_name }} --only-show-errors
+          az aks get-credentials -g ${aks_resource_group} -n ${{ inputs.aks_name }} -f ${KUBECONFIG_PATH}/config-${{ inputs.aks_name }} --only-show-errors --overwrite-existing
           echo "✅ Get kubernetes credentials via az aks get-credentials"
 
           echo "⏳ Convert kubeconfig via kubelogin"
