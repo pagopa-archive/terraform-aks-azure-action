@@ -51,6 +51,8 @@ runs:
         run: |
           echo "🔦 Check kubeconfig"
 
+          ls -la ~/.kube/
+
           if [[ ! -f "~/.kube/config-${{ inputs.aks_name }}" ]]; then
               echo "❌ kubeconfig file doesn't exist into localtion: ~/.kube/config-${{ inputs.aks_name }}"
               exit 1
