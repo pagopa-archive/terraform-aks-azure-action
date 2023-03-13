@@ -49,18 +49,16 @@ runs:
       - name: Check kubeconfig
         shell: bash
         run: |
-          echo "🔦 Check kubeconfig"
-
-          ls -la $HOME/.kube/
-
-          echo "foo ${{ inputs.aks_name }}"
+          echo "🔦 Check kubeconfig file exists"
 
           if [[ ! -f "$HOME/.kube/config-${{ inputs.aks_name }}" ]]; then
-              echo "❌ kubeconfig file doesn't exist into localtion: $HOME/.kube/config-${{ inputs.aks_name }}"
-              exit 1
+            echo "❌ kubeconfig file doesn't exist into localtion: $HOME/.kube/config-${{ inputs.aks_name }}"
+            exit 1
+          else
+            echo "✅ Kubeconfig file is present under: $HOME/.kube/config-${{ inputs.aks_name }}"
           fi
 
-      - name: Terraform plan
+      - name: Terraform ${{ inputs.terraform_action }}
         shell: bash
         run: |
           export PATH="${HOME}/bin:$PATH"
@@ -71,7 +69,7 @@ runs:
           export ARM_USE_AZUREAD=true
           export ARM_STORAGE_USE_AZUREAD=true
 
-          cd ${{ inputs.dir }}
+          cd "${{ inputs.dir }}" || exit
 
           echo "[INFO] 🚀 Run terraform ${{ inputs.terraform_action }} + kubernetes"
           if [[ "${{ inputs.terraform_action }}" == "apply" ]]; then
